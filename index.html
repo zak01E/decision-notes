@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Decision Notes</title>
+  </head>
+  <body>
+    <header>
+      <h1>Decision Notes</h1>
+      <p class="tagline">Turn meeting notes into decisions and tasks, without your notes leaving your computer.</p>
+    </header>
+
+    <main>
+      <section class="card">
+        <div class="row">
+          <label for="mode">Where should the AI run?</label>
+          <select id="mode">
+            <option value="private">Private: only on this device</option>
+            <option value="auto" selected>Auto: on device, cloud if needed</option>
+            <option value="cloud">Cloud only</option>
+          </select>
+          <button id="prepare" class="secondary">Prepare on-device AI</button>
+        </div>
+        <p id="device-status" class="muted"></p>
+        <progress id="download" max="1" value="0" hidden></progress>
+      </section>
+
+      <section class="card">
+        <div class="row">
+          <label for="notes">Meeting notes</label>
+          <button id="sample" class="link">Load an example</button>
+        </div>
+        <textarea id="notes" rows="12" placeholder="Paste your meeting notes here..."></textarea>
+        <div class="row">
+          <button id="extract">Extract decisions</button>
+          <span id="engine" class="badge" hidden></span>
+        </div>
+        <p id="error" class="error" hidden></p>
+      </section>
+
+      <section id="results" class="grid" hidden>
+        <div class="card">
+          <h2>Decisions</h2>
+          <ul id="decisions"></ul>
+          <button id="save" class="secondary">Add to decision log</button>
+        </div>
+        <div class="card">
+          <h2>Action items</h2>
+          <ul id="actions"></ul>
+          <h2>Open questions</h2>
+          <ul id="questions"></ul>
+        </div>
+      </section>
+
+      <section id="conflicts-card" class="card warning" hidden>
+        <h2>These decisions go against earlier ones</h2>
+        <ul id="conflicts"></ul>
+      </section>
+
+      <section class="card">
+        <div class="row">
+          <h2>Decision log</h2>
+          <button id="clear-log" class="link">Clear</button>
+        </div>
+        <p class="muted">Stored only in this browser.</p>
+        <ul id="log"></ul>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

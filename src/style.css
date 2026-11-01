@@ -1,0 +1,185 @@
+:root {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --text: #1d2433;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --border: #e3e6eb;
+  --local: #e7f6ec;
+  --local-text: #166534;
+  --cloud: #e8f0fe;
+  --cloud-text: #1e40af;
+  --warn: #fff7e6;
+  --warn-border: #f5c26b;
+  --error: #b42318;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12151b;
+    --card: #1b1f27;
+    --text: #e6e8ec;
+    --muted: #9aa1ad;
+    --border: #2b313c;
+    --local: #12301d;
+    --local-text: #86efac;
+    --cloud: #172554;
+    --cloud-text: #93c5fd;
+    --warn: #33270f;
+    --warn-border: #a16207;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+}
+
+header,
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+header {
+  padding-top: 32px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+h2 {
+  font-size: 1.05rem;
+  margin: 0 0 8px;
+}
+
+.tagline,
+.muted {
+  color: var(--muted);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.grid .card {
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+textarea,
+select {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  margin: 8px 0 12px;
+}
+
+select {
+  width: auto;
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+button.link {
+  background: none;
+  color: var(--accent);
+  padding: 0;
+}
+
+ul {
+  padding-left: 18px;
+  margin: 0 0 12px;
+}
+
+li {
+  margin-bottom: 8px;
+}
+
+li small {
+  display: block;
+  color: var(--muted);
+}
+
+.badge {
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.9rem;
+}
+
+.badge.local {
+  background: var(--local);
+  color: var(--local-text);
+}
+
+.badge.cloud {
+  background: var(--cloud);
+  color: var(--cloud-text);
+}
+
+.warning {
+  background: var(--warn);
+  border-color: var(--warn-border);
+}
+
+.error {
+  color: var(--error);
+}
+
+progress {
+  width: 100%;
+}
