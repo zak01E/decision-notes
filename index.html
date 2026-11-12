@@ -3,12 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="description" content="Turn confidential meeting notes into decisions and tasks. On-device AI first; anything sent to the cloud is masked on your computer." />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <title>Decision Notes</title>
   </head>
   <body>
     <header>
-      <h1>Decision Notes</h1>
-      <p class="tagline">Turn meeting notes into decisions and tasks, without your notes leaving your computer.</p>
+      <div class="row">
+        <h1>Decision Notes</h1>
+        <span id="net" class="pill"></span>
+      </div>
+      <p class="tagline">
+        Turn confidential meeting notes into decisions and tasks. The AI runs on your computer when it can;
+        when the cloud is needed, names, e-mails and amounts are masked on your computer first.
+      </p>
     </header>
 
     <main>
@@ -17,40 +27,76 @@
           <label for="mode">Where should the AI run?</label>
           <select id="mode">
             <option value="private">Private: only on this device</option>
-            <option value="auto" selected>Auto: on device, cloud if needed</option>
+            <option value="auto" selected>Auto: decide for me</option>
             <option value="cloud">Cloud only</option>
           </select>
           <button id="prepare" class="secondary">Prepare on-device AI</button>
         </div>
         <p id="device-status" class="muted"></p>
         <progress id="download" max="1" value="0" hidden></progress>
+        <label id="mask-row" class="check" hidden>
+          <input type="checkbox" id="mask" checked />
+          Mask sensitive values on this computer before sending to the cloud
+        </label>
+        <details class="always">
+          <summary>Always hide these words</summary>
+          <p class="muted">Client names, project code names, anything that must never leave this computer. One per line or comma-separated. Stored only in this browser.</p>
+          <textarea id="always-hide" rows="2" placeholder="Acme Corp, Project Falcon"></textarea>
+        </details>
       </section>
 
       <section class="card">
         <div class="row">
           <label for="notes">Meeting notes</label>
-          <button id="sample" class="link">Load an example</button>
+          <span>
+            <span id="words" class="muted"></span>
+            <button id="sample" class="link">Load an example</button>
+          </span>
         </div>
         <textarea id="notes" rows="12" placeholder="Paste your meeting notes here..."></textarea>
         <div class="row">
           <button id="extract">Extract decisions</button>
           <span id="engine" class="badge" hidden></span>
         </div>
+        <p id="reason" class="reason" hidden></p>
         <p id="error" class="error" hidden></p>
       </section>
 
-      <section id="results" class="grid" hidden>
-        <div class="card">
-          <h2>Decisions</h2>
-          <ul id="decisions"></ul>
-          <button id="save" class="secondary">Add to decision log</button>
+      <section id="sent-card" class="card sent" hidden>
+        <h2>What left this computer</h2>
+        <p class="muted">This is exactly what was sent to the cloud. The table below never left your browser; it was used to put the real values back into the answer.</p>
+        <div class="grid">
+          <pre id="sent-text"></pre>
+          <table>
+            <thead><tr><th>Placeholder</th><th>Real value (kept here)</th></tr></thead>
+            <tbody id="vault"></tbody>
+          </table>
         </div>
-        <div class="card">
-          <h2>Action items</h2>
-          <ul id="actions"></ul>
-          <h2>Open questions</h2>
-          <ul id="questions"></ul>
+      </section>
+
+      <section id="results" hidden>
+        <p class="muted hint">Click any text to correct it before saving or exporting.</p>
+        <div class="grid">
+          <div class="card">
+            <h2>Decisions</h2>
+            <ul id="decisions"></ul>
+          </div>
+          <div class="card">
+            <h2>Action items</h2>
+            <ul id="actions"></ul>
+            <h2>Open questions</h2>
+            <ul id="questions"></ul>
+          </div>
         </div>
+        <div class="row actions-bar">
+          <button id="save">Add decisions to the log</button>
+          <span>
+            <button id="copy-md" class="secondary">Copy as Markdown</button>
+            <button id="dl-md" class="secondary">Download .md</button>
+            <button id="dl-ics" class="secondary">Tasks to calendar (.ics)</button>
+          </span>
+        </div>
+        <p id="export-status" class="muted"></p>
       </section>
 
       <section id="conflicts-card" class="card warning" hidden>
@@ -63,10 +109,16 @@
           <h2>Decision log</h2>
           <button id="clear-log" class="link">Clear</button>
         </div>
-        <p class="muted">Stored only in this browser.</p>
+        <p class="muted">Stored only in this browser. New notes are checked against it for contradictions.</p>
+        <input id="log-search" type="search" placeholder="Search decisions, owners, reasons..." />
         <ul id="log"></ul>
       </section>
     </main>
+
+    <footer class="muted">
+      Built with Firebase AI Logic hybrid inference (Gemini Nano in Chrome, Gemini in the cloud).
+      <a href="https://github.com/zak01E/decision-notes">Source</a>
+    </footer>
 
     <script type="module" src="/src/main.js"></script>
   </body>

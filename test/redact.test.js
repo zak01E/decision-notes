@@ -28,6 +28,15 @@ test("names from the on-device model are masked, longest first, case-insensitive
   assert.equal(text, "[PERSON_1] met [ORG_1]. [PERSON_2] will tell [ORG_1].");
 });
 
+test("first names alone get the full name's placeholder, and addresses stay whole", () => {
+  const { text, vault } = redact("Tom Becker joined. Tom mails legal@northwind-bank.com about Northwind.", {
+    people: ["Tom Becker"],
+    organizations: ["Northwind"],
+  });
+  assert.equal(text, "[PERSON_1] joined. [PERSON_1] mails [EMAIL_1] about [ORG_1].");
+  assert.equal(vault.byToken.get("[EMAIL_1]"), "legal@northwind-bank.com");
+});
+
 test("restore puts values back in nested model output", () => {
   const { vault } = redact("Tom pays $3,000 to amina@acme.io", { people: ["Tom"] });
   const out = restore(

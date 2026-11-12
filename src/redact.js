@@ -60,8 +60,16 @@ function tokenFor(vault, kind, value) {
  */
 export function redact(text, entities = {}, vault = newVault()) {
   let out = text;
+  const applyRules = (kinds) => {
+    for (const { kind, re } of RULES.filter((r) => kinds.includes(r.kind))) {
+      out = out.replace(re, (m) => (keepMatch(kind, m) ? tokenFor(vault, kind, m) : m));
+    }
+  };
 
-  // Names first (longest first, so "Amina Diallo" wins over "Amina").
+  // E-mails and links first, so a company name inside an address doesn't break the address.
+  applyRules(["EMAIL", "URL"]);
+
+  // Names, longest first, so "Amina Diallo" wins over "Amina".
   const names = [];
   for (const [group, kind] of Object.entries(ENTITY_KINDS)) {
     for (const raw of entities[group] || []) {
@@ -75,9 +83,20 @@ export function redact(text, entities = {}, vault = newVault()) {
     out = out.replace(re, (m) => tokenFor(vault, kind, m));
   }
 
-  for (const { kind, re } of RULES) {
-    out = out.replace(re, (m) => (keepMatch(kind, m) ? tokenFor(vault, kind, m) : m));
+  // People are often called by first or last name alone later in the notes ("Tom will...").
+  // Each part of a full name gets the same placeholder as the full name.
+  for (const { kind, name } of names) {
+    const parts = name.split(/\s+/);
+    if (kind !== "PERSON" || parts.length < 2) continue;
+    const token = tokenFor(vault, kind, name);
+    for (const part of parts) {
+      if (part.length < 3) continue;
+      const re = new RegExp(`(?<![\\w\\[])${escapeRe(part)}(?![\\w\\]])`, "gi");
+      out = out.replace(re, token);
+    }
   }
+
+  applyRules(["IBAN", "CARD", "AMOUNT", "PHONE"]);
   return { text: out, vault };
 }
 
