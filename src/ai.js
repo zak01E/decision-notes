@@ -75,6 +75,16 @@ const conflictSchema = Schema.object({
   },
 });
 
+// Names the on-device model should hide before anything goes to the cloud.
+const sensitiveSchema = Schema.object({
+  properties: {
+    people: Schema.array({ items: Schema.string(), description: "Names of people, as written" }),
+    organizations: Schema.array({ items: Schema.string(), description: "Companies, clients, partners, teams" }),
+    projects: Schema.array({ items: Schema.string(), description: "Internal project or product code names" }),
+    other: Schema.array({ items: Schema.string(), description: "Other confidential values: addresses, ids, salaries" }),
+  },
+});
+
 const MODES = {
   private: InferenceMode.ONLY_ON_DEVICE,
   auto: InferenceMode.PREFER_ON_DEVICE,
@@ -118,20 +128,55 @@ async function run(mode, schema, prompt) {
   };
 }
 
+const EXTRACT_PROMPT =
+  "You read meeting notes and extract structured information.\n" +
+  "Only report what the notes actually say; never invent owners, dates or reasons.\n" +
+  "A decision is something the group agreed or chose. An action item is a task someone will do.\n" +
+  "Placeholders such as [PERSON_1] or [AMOUNT_2] stand for hidden values: copy them exactly as written.\n\n" +
+  "Meeting notes:\n";
+
+/** One extraction call. `mode` is "private" (device), "cloud" or "auto". */
 export function extractFromNotes(notes, mode) {
-  const prompt =
-    "You read meeting notes and extract structured information.\n" +
-    "Only report what the notes actually say; never invent owners, dates or reasons.\n" +
-    "A decision is something the group agreed or chose. An action item is a task someone will do.\n\n" +
-    "Meeting notes:\n" + notes;
-  return run(mode, notesSchema, prompt);
+  return run(mode, notesSchema, EXTRACT_PROMPT + notes);
+}
+
+/**
+ * On-device extraction of long notes: the local model has a small context window,
+ * so the notes are read in chunks and the results are merged.
+ */
+export async function extractInChunks(chunks, onChunk) {
+  const merged = { decisions: [], action_items: [], open_questions: [] };
+  let ms = 0;
+  for (let i = 0; i < chunks.length; i++) {
+    onChunk?.(i + 1, chunks.length);
+    const part = await extractFromNotes(chunks[i], "private");
+    ms += part.ms;
+    for (const key of Object.keys(merged)) merged[key].push(...(part.data[key] || []));
+  }
+  return { data: merged, source: "on_device", ms };
+}
+
+/** Asks the on-device model which names in the notes are sensitive. Never calls the cloud. */
+export async function findSensitive(chunks) {
+  const found = { people: [], organizations: [], projects: [], other: [] };
+  let ms = 0;
+  for (const chunk of chunks) {
+    const prompt =
+      "List every person name, company or client name, internal project name, and other confidential value " +
+      "(street address, employee id, salary) that appears in these notes. Copy each one exactly as written. " +
+      "Do not list job titles, dates or generic words.\n\nNotes:\n" + chunk;
+    const r = await run("private", sensitiveSchema, prompt);
+    ms += r.ms;
+    for (const key of Object.keys(found)) found[key].push(...(r.data[key] || []));
+  }
+  return { entities: found, ms };
 }
 
 export function findConflicts(newDecisions, pastDecisions, mode) {
   const prompt =
     "Compare NEW decisions with PAST decisions of the same team.\n" +
     "List only real contradictions (the new decision reverses or goes against a past one).\n" +
-    "Return an empty list if there are none.\n\n" +
+    "Return an empty list if there are none. Copy placeholders such as [PERSON_1] exactly.\n\n" +
     "PAST decisions:\n" + pastDecisions.map((d) => `- ${d.title}${d.rationale ? ` (because ${d.rationale})` : ""}`).join("\n") +
     "\n\nNEW decisions:\n" + newDecisions.map((d) => `- ${d.title}`).join("\n");
   return run(mode, conflictSchema, prompt);
