@@ -1,9 +1,23 @@
 // Offline support: keep the app shell so Decision Notes opens without a network.
 // Gemini Nano runs inside Chrome, so with the shell cached the whole app works offline.
-const CACHE = "decision-notes-v1";
+const CACHE = "decision-notes-v2";
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/index.html", "/manifest.webmanifest", "/icon.svg"])));
+  // Cache the page and the hashed JS/CSS bundles it links to, so the app works offline
+  // right after the first visit (not only after a reload).
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(CACHE);
+      const shell = ["/", "/index.html", "/manifest.webmanifest", "/icon.svg"];
+      try {
+        const html = await (await fetch("/index.html", { cache: "no-store" })).text();
+        shell.push(...new Set(html.match(/\/assets\/[^"']+\.(?:js|css)/g) || []));
+      } catch {
+        // Offline during install: the fetch handler fills the cache later.
+      }
+      await cache.addAll(shell);
+    })()
+  );
   self.skipWaiting();
 });
 
